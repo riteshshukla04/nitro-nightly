@@ -1,0 +1,14 @@
+[
+    {
+        "name": "react-native-mmkv",
+        "maintainer": "mrousavy"
+    },
+    {
+        "name": "react-native-nitro-ota",
+        "maintainer": "riteshshukla04"
+    },
+    {
+        "name": "react-native-nitro-fetch",
+        "maintainer": "szymon"
+    }
+]

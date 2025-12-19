@@ -1,0 +1,145 @@
+name: Test Nitro Modules
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run daily at midnight UTC
+    - cron: '0 0 * * *'
+  push:
+    branches:
+      - main
+    paths:
+      - 'nitro-modules.json'
+
+jobs:
+  prepare-matrix:
+    name: Prepare Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      libraries: ${{ steps.set-matrix.outputs.libraries }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Read nitro-modules.json
+        id: set-matrix
+        run: |
+          libraries=$(cat nitro-modules.json | jq -c '.')
+          echo "libraries=$libraries" >> $GITHUB_OUTPUT
+
+  build-nitro-modules:
+    name: Build Nitro Modules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Clone Nitro repository
+        run: |
+          git clone https://github.com/mrousavy/nitro.git
+          cd nitro
+          git checkout main
+
+      - name: Install dependencies
+        working-directory: ./nitro
+        run: bun install
+
+      - name: Build Nitro Modules
+        working-directory: ./nitro
+        run: bun run build
+
+      - name: Create nitro-modules package
+        run: |
+          cd nitro/packages/react-native-nitro-modules
+          npm pack
+          mv react-native-nitro-modules-*.tgz ../../../nitro-modules-package.tgz
+
+      - name: Upload nitro-modules artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nitro-modules-package
+          path: nitro-modules-package.tgz
+          retention-days: 1
+
+  test-libraries:
+    name: Test ${{ matrix.library.name }} (${{ matrix.platform }})
+    needs: [prepare-matrix, build-nitro-modules]
+    strategy:
+      fail-fast: false
+      matrix:
+        library: ${{ fromJson(needs.prepare-matrix.outputs.libraries) }}
+        include:
+          - platform: android
+            os: ubuntu-latest
+          - platform: ios
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Download nitro-modules artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nitro-modules-package
+          path: ./
+
+      - name: Setup Java for Android
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+        if: matrix.platform == 'android'
+
+      - name: Create React Native app
+        run: |
+          npx @react-native-community/cli@latest init TestApp --skip-install --pm npm
+
+      - name: Install nitro-modules package
+        working-directory: ./TestApp
+        run: |
+          npm install ../nitro-modules-package.tgz --save
+
+      - name: Install library
+        working-directory: ./TestApp
+        run: |
+          npm install ${{ matrix.library.name }} --save
+
+      - name: Install dependencies
+        working-directory: ./TestApp
+        run: npm install
+
+      - name: Install iOS dependencies
+        working-directory: ./TestApp/ios
+        run: |
+          bundle install
+          RCT_USE_RN_DEP=1 RCT_USE_PREBUILT_RNCORE=1 bundle exec pod install
+        if: matrix.platform == 'ios'
+
+      - name: Build iOS
+        working-directory: ./TestApp
+        run: |
+          cd ios && xcodebuild -workspace TestApp.xcworkspace -scheme TestApp -sdk iphonesimulator
+        if: matrix.platform == 'ios'
+
+      - name: Build Android
+        working-directory: ./TestApp
+        run: |
+          cd android && ./gradlew assembleDebug
+        if: matrix.platform == 'android'
