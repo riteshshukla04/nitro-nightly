@@ -52,12 +52,8 @@ jobs:
       fail-fast: false
       matrix:
         library: ${{ fromJson(needs.prepare-matrix.outputs.libraries) }}
-        include:
-          - platform: android
-            os: ubuntu-latest
-          - platform: ios
-            os: macos-latest
-    runs-on: ${{ matrix.os }}
+        platform: [android, ios]
+    runs-on: macos-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
