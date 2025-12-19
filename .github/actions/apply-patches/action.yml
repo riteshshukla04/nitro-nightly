@@ -1,0 +1,31 @@
+name: 'Apply Patches'
+description: 'Apply patch files to the React Native app template'
+
+inputs:
+  patch-file:
+    description: 'Path to the patch file relative to repository root'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check if patch file exists
+      id: check-patch
+      shell: bash
+      run: |
+        if [ -f "${{ inputs.patch-file }}" ]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Apply patch
+      if: steps.check-patch.outputs.exists == 'true'
+      shell: bash
+      working-directory: ./TestApp
+      run: |
+        git apply --ignore-whitespace "../${{ inputs.patch-file }}" || {
+          echo "Error: Failed to apply patch ${{ inputs.patch-file }}"
+          exit 1
+        }
+

@@ -77,6 +77,12 @@ jobs:
       - name: Setup React Native App
         uses: ./.github/actions/setup-react-native-app
 
+      - name: Apply Patches
+        if: matrix.library.patches != ''
+        uses: ./.github/actions/apply-patches
+        with:
+          patch-file: ${{ matrix.library.patches }}
+
       - name: Install Library
         uses: ./.github/actions/install-library
         with:

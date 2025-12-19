@@ -1,0 +1,71 @@
+diff --git a/android/app/src/main/java/com/testapp/MainApplication.kt b/android/app/src/main/java/com/testapp/MainApplication.kt
+index ba685a8..4a84cef 100644
+--- a/android/app/src/main/java/com/testapp/MainApplication.kt
++++ b/android/app/src/main/java/com/testapp/MainApplication.kt
+@@ -6,12 +6,15 @@ import com.facebook.react.ReactApplication
+ import com.facebook.react.ReactHost
+ import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
+ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
++import com.margelo.nitro.nitroota.core.getStoredBundlePath
++
+ 
+ class MainApplication : Application(), ReactApplication {
+ 
+   override val reactHost: ReactHost by lazy {
+     getDefaultReactHost(
+       context = applicationContext,
++      jsBundleFilePath = getStoredBundlePath(applicationContext),
+       packageList =
+         PackageList(this).packages.apply {
+           // Packages that cannot be autolinked yet can be added manually here, for example:
+diff --git a/ios/Podfile b/ios/Podfile
+index 3e56a8f..8acb79d 100644
+--- a/ios/Podfile
++++ b/ios/Podfile
+@@ -16,7 +16,7 @@ end
+ 
+ target 'TestApp' do
+   config = use_native_modules!
+-
++  pod 'NitroOtaBundleManager', :path => '../node_modules/react-native-nitro-ota'
+   use_react_native!(
+     :path => config[:reactNativePath],
+     # An absolute path to your application root.
+diff --git a/ios/TestApp/AppDelegate.swift b/ios/TestApp/AppDelegate.swift
+index 39aeed1..b5271d7 100644
+--- a/ios/TestApp/AppDelegate.swift
++++ b/ios/TestApp/AppDelegate.swift
+@@ -2,6 +2,8 @@ import UIKit
+ import React
+ import React_RCTAppDelegate
+ import ReactAppDependencyProvider
++import NitroOtaBundleManager
++
+ 
+ @main
+ class AppDelegate: UIResponder, UIApplicationDelegate {
+@@ -39,10 +41,18 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
+   }
+ 
+   override func bundleURL() -> URL? {
+-#if DEBUG
+-    RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
+-#else
+-    Bundle.main.url(forResource: "main", withExtension: "jsbundle")
+-#endif
+-  }
++        #if DEBUG
++        return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
++        #else
++        // Check for OTA bundle
++        if let bundlePath = NitroOtaBundleManager.shared.getStoredBundlePath() {
++            let bundleURL = URL(fileURLWithPath: bundlePath)
++
++            return bundleURL
++        }
++
++        // Fallback to default bundle
++        return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
++        #endif
++    }
+ }
