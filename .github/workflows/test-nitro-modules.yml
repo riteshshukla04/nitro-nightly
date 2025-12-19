@@ -113,16 +113,16 @@ jobs:
       - name: Install nitro-modules package
         working-directory: ./TestApp
         run: |
-          npm install ../nitro-modules-package.tgz --save
+          bun add ../nitro-modules-package.tgz
 
       - name: Install library
         working-directory: ./TestApp
         run: |
-          npm install ${{ matrix.library.name }} --save
+          bun add ${{ matrix.library.name }}
 
       - name: Install dependencies
         working-directory: ./TestApp
-        run: npm install
+        run: bun install
 
       - name: Install iOS dependencies
         working-directory: ./TestApp/ios
