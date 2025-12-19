@@ -1,0 +1,19 @@
+name: 'Build iOS'
+description: 'Install iOS dependencies and build the iOS app'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install iOS dependencies
+      shell: bash
+      working-directory: ./TestApp/ios
+      run: |
+        bundle install
+        RCT_USE_RN_DEP=1 RCT_USE_PREBUILT_RNCORE=1 bundle exec pod install
+
+    - name: Build iOS
+      shell: bash
+      working-directory: ./TestApp
+      run: |
+        cd ios && xcodebuild -workspace TestApp.xcworkspace -scheme TestApp -sdk iphonesimulator
+

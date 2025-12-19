@@ -1,0 +1,12 @@
+name: 'Build Android'
+description: 'Build the Android app'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Build Android
+      shell: bash
+      working-directory: ./TestApp
+      run: |
+        cd android && ./gradlew assembleDebug
+

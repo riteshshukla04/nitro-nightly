@@ -1,0 +1,31 @@
+name: 'Install Library'
+description: 'Install nitro-modules package and the library to test'
+
+inputs:
+  nitro-modules-package:
+    description: 'Path to the nitro-modules package tarball'
+    required: true
+  library-name:
+    description: 'Name of the library to install'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install nitro-modules package
+      shell: bash
+      working-directory: ./TestApp
+      run: |
+        bun add ${{ inputs.nitro-modules-package }}
+
+    - name: Install library
+      shell: bash
+      working-directory: ./TestApp
+      run: |
+        bun add ${{ inputs.library-name }}
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ./TestApp
+      run: bun install
+

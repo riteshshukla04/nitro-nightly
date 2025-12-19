@@ -1,0 +1,11 @@
+name: 'Setup React Native App'
+description: 'Create a new React Native app for testing'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Create React Native app
+      shell: bash
+      run: |
+        npx @react-native-community/cli@latest init TestApp --skip-install --pm npm
+

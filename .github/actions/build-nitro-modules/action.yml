@@ -1,0 +1,42 @@
+name: 'Build Nitro Modules'
+description: 'Clone, build, and package nitro modules from main branch'
+
+outputs:
+  package-path:
+    description: 'Path to the packaged nitro-modules tarball'
+    value: ${{ steps.package.outputs.path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: latest
+
+    - name: Clone Nitro repository
+      shell: bash
+      run: |
+        git clone https://github.com/mrousavy/nitro.git
+        cd nitro
+        git checkout main
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ./nitro
+      run: bun install
+
+    - name: Build Nitro Modules
+      shell: bash
+      working-directory: ./nitro
+      run: bun run build
+
+    - name: Create nitro-modules package
+      id: package
+      shell: bash
+      run: |
+        cd nitro/packages/react-native-nitro-modules
+        npm pack
+        mv react-native-nitro-modules-*.tgz ../../../nitro-modules-package.tgz
+        echo "path=${{ github.workspace }}/nitro-modules-package.tgz" >> $GITHUB_OUTPUT
+

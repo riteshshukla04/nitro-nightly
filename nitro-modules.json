@@ -5,7 +5,8 @@
     },
     {
         "name": "react-native-nitro-ota",
-        "maintainer": "riteshshukla04"
+        "maintainer": "riteshshukla04",
+        "patches": "patches/react-native-nitro-ota.patch"
     },
     {
         "name": "react-native-nitro-fetch",
